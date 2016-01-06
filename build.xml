@@ -1,0 +1,13 @@
+<project default="jar">
+  <target name="build">
+    <javac srcdir="org/twodee/deskstop" includeantruntime="false"/>
+  </target>
+  <target name="jar" depends="build">
+    <jar destfile="deskstop.jar">
+      <fileset dir="." includes="org/twodee/deskstop/*.class"/>
+      <manifest>
+        <attribute name="Main-Class" value="org.twodee.deskstop.Deskstop"/>
+      </manifest>
+    </jar>
+  </target>
+</project>

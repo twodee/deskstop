@@ -1,5 +1,6 @@
 package org.twodee.deskstop;
 
+import javax.imageio.ImageIO;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -34,6 +35,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class Deskstop extends JFrame {
+  private static final Color WINDOW_COLOR = new Color(255, 0, 0, 255);
   private static final int MINIMUM_BORDER = 10;
   private ArrayList<BufferedImage> screenshots;
   private Robot robot;
@@ -41,6 +43,7 @@ public class Deskstop extends JFrame {
   private JSlider scrubber;
   private boolean showFramesOnScrub;
   private PreviewPanel panel;
+  private int i;
 
   public Deskstop() throws AWTException {
     super("Deskstop");
@@ -51,9 +54,9 @@ public class Deskstop extends JFrame {
     setBackground(new Color(0, 0, 0, 0));
 
     JMenuBar menuBar = new JMenuBar();
-    menuBar.setBackground(new Color(255, 0, 0, 255));
+    menuBar.setBackground(WINDOW_COLOR);
     JMenu menu = new JMenu("File");
-    menu.setBackground(new Color(255, 0, 0, 255));
+    menu.setBackground(WINDOW_COLOR);
 
     JMenuItem exportItem = new JMenuItem("Export");
     menu.add(exportItem);
@@ -80,7 +83,7 @@ public class Deskstop extends JFrame {
     });
 
     showFramesOnScrub = true;
-    JCheckBoxMenuItem showFramesItem = new JCheckBoxMenuItem("Show Frames on Scrub");
+    final JCheckBoxMenuItem showFramesItem = new JCheckBoxMenuItem("Show Frames on Scrub");
     showFramesItem.setSelected(showFramesOnScrub);
     menu.add(showFramesItem);
     showFramesItem.addActionListener(new ActionListener() {
@@ -134,6 +137,7 @@ public class Deskstop extends JFrame {
     northPanel.add(recordButton);
 
     scrubber = new JSlider(0, 0, 0);
+    scrubber.setBackground(WINDOW_COLOR);
     southPanel.add(scrubber);
 
     scrubberLabel = new JLabel();
@@ -175,6 +179,10 @@ public class Deskstop extends JFrame {
         Point corner = panel.getLocationOnScreen();
         Rectangle rectangle = new Rectangle(corner.x, corner.y, panel.getWidth(), panel.getHeight());
         BufferedImage screenshot = robot.createScreenCapture(rectangle);
+        try {
+          ImageIO.write(screenshot, "png", new java.io.File("/home/johnch/Desktop/" + i + ".png"));
+          ++i;
+        } catch (Exception e) {}
         screenshots.add(scrubber.getValue(), screenshot);
         synchronizeScrubber();
         scrubber.setValue(scrubber.getValue() + 1);
@@ -196,15 +204,16 @@ public class Deskstop extends JFrame {
     public PreviewPanel() { 
       setPreferredSize(new Dimension(300, 300));
       setSize(getPreferredSize());
+      setOpaque(false);
     }
 
     protected void paintComponent(Graphics g) {
       Graphics2D g2 = (Graphics2D) g;
       if (showFramesOnScrub && scrubber.getValue() < screenshots.size()) {
-        g2.drawImage(screenshots.get(scrubber.getValue()), 0, 0, null);
+        g2.drawImage(screenshots.get(scrubber.getValue()), 0, 0, new Color(0, 0, 0, 0), null);
       } else {
         g2.setPaint(new Color(0, 0, 0, 0));
-        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.clearRect(0, 0, getWidth(), getHeight());
       }
     }
   }
@@ -212,7 +221,7 @@ public class Deskstop extends JFrame {
   private static class SolidPanel extends JPanel {
     public SolidPanel(int width, int height) { 
       setMinimumSize(new Dimension(width, height));
-      setBackground(new Color(255, 0, 0, 255));
+      setBackground(WINDOW_COLOR);
     }
   }
 
@@ -224,8 +233,6 @@ public class Deskstop extends JFrame {
       System.err.println("Translucency is not supported");
       System.exit(0);
     }
-
-    JFrame.setDefaultLookAndFeelDecorated(true);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

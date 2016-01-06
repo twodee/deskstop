@@ -4,4 +4,4 @@ Deskstop is a utility for recording stop-motion animations of regions of your co
 
 It has been tested on Macintosh OS X Yosemite, Windows 7, and Linux. But it doesn't work on Linux. The Robot class on Linux fails to correctly capture screenshots of transparent windows. See [JDK-6903034](http://bugs.java.com/view_bug.do?bug_id=6903034) and [JDK-7043455](http://bugs.java.com/view_bug.do?bug_id=7043455).
 
-Thanks to [Rob Camick](https://tips4java.wordpress.com/2009/09/13/resizing-components/) for sharing your component resizing/scaling utilities and [Elliot Kroo](http://elliot.kroo.net/software/java/GifSequenceWriter/) for sharing your `GifSequenceWriter`.
+Thank you, [Rob Camick](https://tips4java.wordpress.com/2009/09/13/resizing-components/), for sharing your component resizing/scaling utilities. Thank you, [Elliot Kroo](http://elliot.kroo.net/software/java/GifSequenceWriter/), for sharing your `GifSequenceWriter`.

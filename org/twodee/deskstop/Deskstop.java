@@ -138,6 +138,9 @@ public class Deskstop extends JFrame {
     optionsButton.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         menu.show(e.getComponent(), e.getX(), e.getY());
+
+        // On Windows, menu is blank for some reason. Force a redraw.
+        menu.repaint();
       }
     });
 

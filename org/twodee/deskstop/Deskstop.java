@@ -1,5 +1,9 @@
 package org.twodee.deskstop;
 
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import javax.imageio.ImageIO;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
@@ -22,8 +26,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -37,13 +40,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class Deskstop extends JFrame {
   private static final Color WINDOW_COLOR = new Color(255, 0, 0, 255);
   private static final int MINIMUM_BORDER = 10;
+
   private ArrayList<BufferedImage> screenshots;
   private Robot robot;
   private JLabel scrubberLabel;
   private JSlider scrubber;
   private boolean showFramesOnScrub;
   private PreviewPanel panel;
-  private int i;
 
   public Deskstop() throws AWTException {
     super("Deskstop");
@@ -53,10 +56,7 @@ public class Deskstop extends JFrame {
     setUndecorated(true);
     setBackground(new Color(0, 0, 0, 0));
 
-    JMenuBar menuBar = new JMenuBar();
-    menuBar.setBackground(WINDOW_COLOR);
-    JMenu menu = new JMenu("File");
-    menu.setBackground(WINDOW_COLOR);
+    final JPopupMenu menu = new JPopupMenu();
 
     JMenuItem exportItem = new JMenuItem("Export");
     menu.add(exportItem);
@@ -125,9 +125,6 @@ public class Deskstop extends JFrame {
       }
     });
 
-    menuBar.add(menu);
-    setJMenuBar(menuBar);
-
     SolidPanel westPanel = new SolidPanel(MINIMUM_BORDER, 0);
     SolidPanel eastPanel = new SolidPanel(MINIMUM_BORDER, 0);
     SolidPanel southPanel = new SolidPanel(0, MINIMUM_BORDER);
@@ -135,6 +132,14 @@ public class Deskstop extends JFrame {
 
     JButton recordButton = new JButton("Record Screenshot");
     northPanel.add(recordButton);
+
+    JButton optionsButton = new JButton("Options");
+    northPanel.add(optionsButton);
+    optionsButton.addMouseListener(new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        menu.show(e.getComponent(), e.getX(), e.getY());
+      }
+    });
 
     scrubber = new JSlider(0, 0, 0);
     scrubber.setBackground(WINDOW_COLOR);
@@ -160,6 +165,10 @@ public class Deskstop extends JFrame {
     panel = new PreviewPanel();
     add(panel, BorderLayout.CENTER);
 
+    northPanel.setComponentPopupMenu(menu);
+    southPanel.setComponentPopupMenu(menu);
+    panel.setComponentPopupMenu(menu);
+
     new ComponentMover(this, panel);
     new ComponentMover(this, northPanel);
 
@@ -179,14 +188,17 @@ public class Deskstop extends JFrame {
         Point corner = panel.getLocationOnScreen();
         Rectangle rectangle = new Rectangle(corner.x, corner.y, panel.getWidth(), panel.getHeight());
         BufferedImage screenshot = robot.createScreenCapture(rectangle);
-        try {
-          ImageIO.write(screenshot, "png", new java.io.File("/home/johnch/Desktop/" + i + ".png"));
-          ++i;
-        } catch (Exception e) {}
         screenshots.add(scrubber.getValue(), screenshot);
         synchronizeScrubber();
         scrubber.setValue(scrubber.getValue() + 1);
         repaint();
+      }
+    });
+
+    addComponentListener(new ComponentAdapter() {
+      public void componentResized(ComponentEvent e) {
+        screenshots.clear();
+        synchronizeScrubber();
       }
     });
   } 
@@ -204,7 +216,6 @@ public class Deskstop extends JFrame {
     public PreviewPanel() { 
       setPreferredSize(new Dimension(300, 300));
       setSize(getPreferredSize());
-      setOpaque(false);
     }
 
     protected void paintComponent(Graphics g) {
@@ -212,7 +223,7 @@ public class Deskstop extends JFrame {
       if (showFramesOnScrub && scrubber.getValue() < screenshots.size()) {
         g2.drawImage(screenshots.get(scrubber.getValue()), 0, 0, new Color(0, 0, 0, 0), null);
       } else {
-        g2.setPaint(new Color(0, 0, 0, 0));
+        g2.setBackground(new Color(0, 0, 0, 0));
         g2.clearRect(0, 0, getWidth(), getHeight());
       }
     }
@@ -229,8 +240,8 @@ public class Deskstop extends JFrame {
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsDevice gd = ge.getDefaultScreenDevice();
 
-    if (!gd.isWindowTranslucencySupported(WindowTranslucency.TRANSLUCENT)) {
-      System.err.println("Translucency is not supported");
+    if (!gd.isWindowTranslucencySupported(WindowTranslucency.PERPIXEL_TRANSLUCENT)) {
+      JOptionPane.showMessageDialog(null, "Deskstop requires transparent windows, which your computer does not support.", "Error", JOptionPane.ERROR_MESSAGE);
       System.exit(0);
     }
 

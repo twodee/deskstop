@@ -1,5 +1,7 @@
 package org.twodee.deskstop;
 
+import java.io.IOException;
+import java.io.File;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -46,12 +48,15 @@ public class Deskstop extends JFrame {
   private JLabel scrubberLabel;
   private JSlider scrubber;
   private boolean showFramesOnScrub;
+  private boolean isOnTop;
   private PreviewPanel panel;
+  private int nsingles;
 
   public Deskstop() throws AWTException {
     super("Deskstop");
 
     screenshots = new ArrayList<BufferedImage>();
+    nsingles = 0;
 
     setUndecorated(true);
     setBackground(new Color(0, 0, 0, 0));
@@ -82,14 +87,48 @@ public class Deskstop extends JFrame {
       }
     });
 
+    JMenuItem exportSingleItem = new JMenuItem("Export Single Frame");
+    menu.add(exportSingleItem);
+    exportSingleItem.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent event) {
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png");
+        chooser.setFileFilter(filter);
+        chooser.setSelectedFile(new File(String.format("deskstop%02d.png", nsingles)));
+        int okay = chooser.showSaveDialog(Deskstop.this);
+        if (okay == JFileChooser.APPROVE_OPTION) {
+          Point corner = panel.getLocationOnScreen();
+          Rectangle rectangle = new Rectangle(corner.x, corner.y, panel.getWidth(), panel.getHeight());
+          BufferedImage screenshot = robot.createScreenCapture(rectangle);
+          try {
+            ImageIO.write(screenshot, "png", chooser.getSelectedFile());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          ++nsingles;
+        }
+      }
+    });
+
     showFramesOnScrub = true;
-    final JCheckBoxMenuItem showFramesItem = new JCheckBoxMenuItem("Show Frames on Scrub");
+    final JCheckBoxMenuItem showFramesItem = new JCheckBoxMenuItem("Show frames on scrub");
     showFramesItem.setSelected(showFramesOnScrub);
     menu.add(showFramesItem);
     showFramesItem.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
         showFramesOnScrub = showFramesItem.isSelected();
         repaint();
+      }
+    });
+
+    isOnTop = true;
+    final JCheckBoxMenuItem isOnTopItem = new JCheckBoxMenuItem("Always on top");
+    isOnTopItem.setSelected(isOnTop);
+    menu.add(isOnTopItem);
+    isOnTopItem.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent event) {
+        isOnTop = isOnTopItem.isSelected();
+        setAlwaysOnTop(isOnTop);
       }
     });
 
@@ -168,8 +207,6 @@ public class Deskstop extends JFrame {
     panel = new PreviewPanel();
     add(panel, BorderLayout.CENTER);
 
-    northPanel.setComponentPopupMenu(menu);
-    southPanel.setComponentPopupMenu(menu);
     panel.setComponentPopupMenu(menu);
 
     new ComponentMover(this, panel);
@@ -180,7 +217,7 @@ public class Deskstop extends JFrame {
 
     JRootPane root = getRootPane();
     root.putClientProperty("Window.shadow", Boolean.FALSE);
-    setAlwaysOnTop(true);
+    setAlwaysOnTop(isOnTop);
     setDefaultCloseOperation(EXIT_ON_CLOSE);
     setLocationRelativeTo(null);
     pack();
